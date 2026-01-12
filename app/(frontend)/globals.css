@@ -1,0 +1,95 @@
+@import "tailwindcss";
+
+/* ---------------------------
+   CSS Variables / Theme
+---------------------------- */
+:root {
+  /* Base palette */
+  --color-background: #d4ebf8;
+  --color-foreground: #0a3981;
+  --color-primary: #1f509a;
+  --color-accent: #e38e49;
+  --color-gray-500: #6b7280;
+  /* Fonts (from Google / Tailwind setup) */
+  --font-sans: var(--font-geist-sans, Arial, Helvetica, sans-serif);
+  --font-mono: var(--font-geist-mono, monospace);
+}
+
+/* Dark mode override */
+/* @media (prefers-color-scheme: dark) {
+  :root {
+    --color-background: #0a3981;
+    --color-foreground: #d4ebf8;
+    --color-primary: #1f509a;
+    --color-accent: #e38e49;
+    --color-gray-500: #9ca3af;
+  }
+} */
+
+/* ---------------------------
+   Theme Inline (Optional Tailwind)
+---------------------------- */
+@theme inline {
+  --color-background: var(--color-background);
+  --color-foreground: var(--color-foreground);
+  --color-primary: var(--color-primary);
+
+  --color-accent: var(--color-accent);
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
+  --color-gray: var(--color-gray-500);
+}
+
+/* ---------------------------
+   Body / Base Styles
+---------------------------- */
+body {
+  background: var(--color-background);
+  color: var(--color-foreground);
+  font-family: var(--font-sans);
+  min-height: 100dvh;
+  margin: 0;
+  line-height: 1.5;
+  display: flex;
+  flex-direction: column;
+}
+
+.icon {
+  @apply size-7 md:size-10 rounded-full p-1 bg-gray/20 text-foreground hover:bg-accent/60 hover:text-black transition-colors cursor-pointer flex items-center justify-center;
+}
+
+.active {
+  @apply bg-black text-white;
+}
+
+/* globals.css or a component CSS file */
+.users-m::-webkit-scrollbar {
+  width: 8px; /* scrollbar width */
+  @apply hidden;
+}
+
+.users-m::-webkit-scrollbar-track {
+  background: #f1f1f1; /* track color */
+  border-radius: 4px;
+}
+
+.users-m::-webkit-scrollbar-thumb {
+  background: #888; /* thumb color */
+  border-radius: 4px;
+}
+
+.users-m::-webkit-scrollbar-thumb:hover {
+  background: #555; /* thumb hover color */
+}
+
+.avatar-online::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 12px;
+  height: 12px;
+  background-color: #34d399; /* Tailwind's green-400 */
+  border: 2px solid white; /* Border to separate from avatar */
+  border-radius: 50%;
+}
