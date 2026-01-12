@@ -14,6 +14,25 @@ import {
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
+interface IUser {
+  name: string;
+  image: string;
+  status: "online" | "offline";
+}
+
+interface IMessage {
+  id: number;
+  type: string;
+  text: string;
+  time: string;
+  status: string;
+}
+
+interface DataLoaded {
+  user: IUser;
+  messages: IMessage[];
+}
+
 const data = [
   {
     id: 1,
@@ -133,6 +152,7 @@ const messages = [
     type: "receiver",
     text: "Hey! Did you finish the dashboard UI?",
     time: "4:30 pm",
+    status: "seen",
   },
   {
     id: 2,
@@ -146,6 +166,7 @@ const messages = [
     type: "receiver",
     text: "Great! Is it using Tailwind?",
     time: "4:32 pm",
+    status: "seen",
   },
   {
     id: 4,
@@ -159,6 +180,7 @@ const messages = [
     type: "receiver",
     text: "Perfect. Don't forget to make it responsive.",
     time: "4:33 pm",
+    status: "seen",
   },
   {
     id: 6,
@@ -172,6 +194,7 @@ const messages = [
     type: "receiver",
     text: "Send me a screenshot when you're ready.",
     time: "4:36 pm",
+    status: "seen",
   },
   {
     id: 8,
@@ -185,6 +208,7 @@ const messages = [
     type: "receiver",
     text: "I'll be waiting in the meeting room.",
     time: "4:38 pm",
+    status: "seen",
   },
   {
     id: 10,
@@ -198,6 +222,7 @@ const messages = [
     type: "receiver",
     text: "Wait, did you bring your charger?",
     time: "4:41 pm",
+    status: "seen",
   },
   {
     id: 12,
@@ -211,6 +236,7 @@ const messages = [
     type: "receiver",
     text: "Perfect, my laptop is at 5%.",
     time: "4:42 pm",
+    status: "seen",
   },
   {
     id: 14,
@@ -224,6 +250,7 @@ const messages = [
     type: "receiver",
     text: "I don't see you, are you at Room 302?",
     time: "4:46 pm",
+    status: "seen",
   },
   {
     id: 16,
@@ -232,7 +259,13 @@ const messages = [
     time: "4:47 pm",
     status: "seen",
   },
-  { id: 17, type: "receiver", text: "Classic Ahmed lol.", time: "4:47 pm" },
+  {
+    id: 17,
+    type: "receiver",
+    text: "Classic Ahmed lol.",
+    time: "4:47 pm",
+    status: "seen",
+  },
   {
     id: 18,
     type: "sender",
@@ -245,6 +278,7 @@ const messages = [
     type: "receiver",
     text: "The client is asking if we can change the primary blue.",
     time: "5:15 pm",
+    status: "seen",
   },
   {
     id: 20,
@@ -258,6 +292,7 @@ const messages = [
     type: "receiver",
     text: "They want something 'more energetic'. Maybe a darker indigo?",
     time: "5:17 pm",
+    status: "seen",
   },
   {
     id: 22,
@@ -271,6 +306,7 @@ const messages = [
     type: "receiver",
     text: "Let's see it on the live preview.",
     time: "5:20 pm",
+    status: "seen",
   },
   {
     id: 24,
@@ -284,6 +320,7 @@ const messages = [
     type: "receiver",
     text: "That looks way better actually. Good call.",
     time: "5:26 pm",
+    status: "seen",
   },
   {
     id: 26,
@@ -297,6 +334,7 @@ const messages = [
     type: "receiver",
     text: "Can you check the padding on the cards?",
     time: "5:30 pm",
+    status: "delivered",
   },
   {
     id: 28,
@@ -310,6 +348,7 @@ const messages = [
     type: "receiver",
     text: "Thanks! I'll tell the manager we are almost ready.",
     time: "5:33 pm",
+    status: "sent",
   },
   {
     id: 30,
@@ -321,7 +360,12 @@ const messages = [
 ];
 
 const page = () => {
-  const [contextMenu, setContextMenu] = useState({
+  const [contextMenu, setContextMenu] = useState<{
+    show: boolean;
+    x: number;
+    y: number;
+    targetId: number | null;
+  }>({
     show: false,
     x: 0,
     y: 0,
@@ -357,13 +401,32 @@ const page = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [mounted, setMounted] = useState(false);
 
+  const [chatOpen, setChatOpen] = useState(true);
+  const [dataLoaded, setDataLoaded] = useState({} as DataLoaded);
+
   useEffect(() => {
     containerRef.current?.scrollTo({
       top: containerRef.current.scrollHeight,
       behavior: "auto",
     });
     setMounted(true);
-  }, [messages]);
+  }, [dataLoaded]);
+
+  const handleOpenChat = ({ id }: { id: number }) => {
+    setChatOpen(true);
+    setDataLoaded({
+      user: {
+        name: data.find((user) => user.id === id)?.name || "Unknown User",
+        image:
+          data.find((user) => user.id === id)?.image ||
+          "https://github.com/shadcn.png",
+        status: data.find((user) => user.id === id)?.online
+          ? "online"
+          : "offline",
+      },
+      messages: messages,
+    });
+  };
 
   return (
     <main className="chat h-dvh flex ">
@@ -384,185 +447,208 @@ const page = () => {
                 typing={user.typing}
                 online={user.online}
                 saw={user.saw}
+                onClick={() => handleOpenChat({ id: user.id })}
               />
             ))}
           </div>
         </div>
-        <div className="chat max-md:hidden md:flex-6 flex flex-col relative">
+        <div className="chat max-md:hidden md:flex-6  flex flex-col relative">
           <div className="chat-content">
-            <div className="header bg-background p-6 flex justify-between items-center border rounded-tr-xl border-gray">
-              <div className="person flex gap-4 ">
-                <Avatar className={`size-12 `}>
-                  <AvatarImage src="https://github.com/shadcn.png" alt="user" />
-                  <AvatarFallback>CN</AvatarFallback>
-                </Avatar>
-                <div className="identity">
-                  <h3 className="text-lg font-bold">Ahmed Elbaz</h3>
-                  <p className="text-sm text-black">
-                    <span
-                      className={`size-2 rounded-full ${"bg-green-500"} inline-block mr-1`}
-                    ></span>{" "}
-                    Online
-                  </p>
-                </div>
-              </div>
-              <div className="action flex">
-                <FileImage className="size-6 mr-4 cursor-pointer hover:text-accent duration-200" />
-                <File className="size-6 mr-4 cursor-pointer hover:text-accent duration-200" />
-                <Pin className="size-6 mr-4 cursor-pointer hover:text-accent duration-200" />
-              </div>
-            </div>
-            <div
-              ref={containerRef}
-              tabIndex={0}
-              className={`body flex-1 p-5 mb-13 text-background overflow-y-auto flex flex-col justify-start h-dvh ${
-                mounted ? "opacity-100" : "opacity-0"
-              }`}
-            >
-              {messages.map((msg) => {
-                if (msg.type === "receiver") {
-                  return (
-                    <div
-                      key={msg.id}
-                      className="reciver flex justify-start mb-4 flex-col items-start"
-                    >
-                      <p
-                        className="user p-2 bg-black text-white rounded-lg cursor-default"
-                        tabIndex={0}
-                        onContextMenu={(e) =>
-                          handleContextMenu({ e, id: msg.id })
-                        }
-                      >
-                        {msg.text}
+            {chatOpen && dataLoaded.user ? (
+              <>
+                <div className="header bg-background p-6 flex justify-between items-center border rounded-tr-xl border-gray">
+                  <div className="person flex gap-4 ">
+                    <Avatar className={`size-12 `}>
+                      <AvatarImage src={dataLoaded.user.image} alt="user" />
+                      <AvatarFallback>CN</AvatarFallback>
+                    </Avatar>
+                    <div className="identity">
+                      <h3 className="text-lg font-bold">
+                        {dataLoaded.user.name}
+                      </h3>
+                      <p className="text-sm text-black">
+                        <span
+                          className={`size-2 rounded-full ${
+                            dataLoaded.user.status === "online"
+                              ? "bg-green-500"
+                              : "bg-gray-500"
+                          } inline-block mr-1`}
+                        ></span>{" "}
+                        {dataLoaded.user.status}
                       </p>
-                      <span className="text-sm ">{msg.time}</span>
-                      {contextMenu.show && (
-                        <div
-                          className="fixed z-50 bg-background border border-gray rounded-lg w-48 py-2 animate-in fade-in zoom-in duration-100"
-                          style={{
-                            top: contextMenu.y,
-                            left: contextMenu.x,
-                          }}
-                        >
-                          <ul className="flex flex-col text-sm text-foreground">
-                            <li
-                              className="px-4 py-2 hover:bg-accent hover:text-white cursor-pointer flex items-center gap-2"
-                              onClick={() =>
-                                console.log("Reply to", contextMenu.targetId)
-                              }
-                            >
-                              Reply
-                            </li>
-                            <li
-                              className="px-4 py-2 hover:bg-accent hover:text-white cursor-pointer"
-                              onClick={() => console.log("Copy text")}
-                            >
-                              Copy Text
-                            </li>
-                            <hr className="my-1 border-gray" />
-                            <li
-                              className="px-4 py-2 hover:bg-destructive hover:text-white cursor-pointer text-red-500"
-                              onClick={() =>
-                                console.log("Delete", contextMenu.targetId)
-                              }
-                            >
-                              Delete Message
-                            </li>
-                          </ul>
-                        </div>
-                      )}
                     </div>
-                  );
-                } else {
-                  return (
-                    <div
-                      key={msg.id}
-                      className="sender flex items-end mb-4 flex-col"
-                    >
-                      <div className="text py-2 px-3 bg-background text-black rounded-lg relative flex flex-col items-end">
-                        <p
-                          className="user cursor-default"
-                          tabIndex={0}
-                          onContextMenu={(e) =>
-                            handleContextMenu({ e, id: msg.id })
-                          }
+                  </div>
+                  <div className="action flex">
+                    <FileImage className="size-6 mr-4 cursor-pointer hover:text-accent duration-200" />
+                    <File className="size-6 mr-4 cursor-pointer hover:text-accent duration-200" />
+                    <Pin className="size-6 mr-4 cursor-pointer hover:text-accent duration-200" />
+                  </div>
+                </div>
+                <div
+                  ref={containerRef}
+                  tabIndex={0}
+                  className={`body flex-1 p-5 pb-55 text-background overflow-y-auto flex flex-col justify-start h-dvh ${
+                    mounted ? "opacity-100" : "opacity-0"
+                  }`}
+                >
+                  {dataLoaded.messages.map((msg) => {
+                    if (msg.type === "receiver") {
+                      return (
+                        <div
+                          key={msg.id}
+                          className="reciver flex justify-start mb-4 flex-col items-start"
                         >
-                          {msg.text}
-                        </p>
-                        <div className="state ">
-                          {msg.status === "seen" ? (
-                            <CheckCheck className="inline-block ml-2 size-4 text-blue-500 " />
-                          ) : msg.status === "delivered" ? (
-                            <CheckCheck className="inline-block ml-2 size-4 text-gray " />
-                          ) : (
-                            <Check className="inline-block ml-2 size-4 text-gray " />
+                          <p
+                            className="user p-2 bg-black text-white rounded-lg cursor-default"
+                            tabIndex={0}
+                            onContextMenu={(e) =>
+                              handleContextMenu({ e, id: msg.id })
+                            }
+                          >
+                            {msg.text}
+                          </p>
+                          <span className="text-sm ">{msg.time}</span>
+                          {contextMenu.show && (
+                            <div
+                              className="fixed z-50 bg-background border border-gray rounded-lg w-48 py-2 animate-in fade-in zoom-in duration-100"
+                              style={{
+                                top: contextMenu.y,
+                                left: contextMenu.x,
+                              }}
+                            >
+                              <ul className="flex flex-col text-sm text-foreground">
+                                <li
+                                  className="px-4 py-2 hover:bg-accent hover:text-white cursor-pointer flex items-center gap-2"
+                                  onClick={() =>
+                                    console.log(
+                                      "Reply to",
+                                      contextMenu.targetId
+                                    )
+                                  }
+                                >
+                                  Reply
+                                </li>
+                                <li
+                                  className="px-4 py-2 hover:bg-accent hover:text-white cursor-pointer"
+                                  onClick={() => console.log("Copy text")}
+                                >
+                                  Copy Text
+                                </li>
+                                <hr className="my-1 border-gray" />
+                                <li
+                                  className="px-4 py-2 hover:bg-destructive hover:text-white cursor-pointer text-red-500"
+                                  onClick={() =>
+                                    console.log("Delete", contextMenu.targetId)
+                                  }
+                                >
+                                  Delete Message
+                                </li>
+                              </ul>
+                            </div>
                           )}
                         </div>
-                      </div>
-                      <span className="text-sm">{msg.time}</span>
-                      {contextMenu.show && (
+                      );
+                    } else {
+                      return (
                         <div
-                          className="fixed z-50 bg-background border border-gray rounded-lg w-48 py-2 animate-in fade-in zoom-in duration-100"
-                          style={{
-                            top: contextMenu.y,
-                            left: contextMenu.x,
-                          }}
+                          key={msg.id}
+                          className="sender flex items-end mb-4 flex-col"
                         >
-                          <ul className="flex flex-col text-sm text-foreground">
-                            <li
-                              className="px-4 py-2 hover:bg-accent hover:text-white cursor-pointer flex items-center gap-2"
-                              onClick={() =>
-                                console.log("Reply to", contextMenu.targetId)
+                          <div className="text py-2 px-3 bg-background text-black rounded-lg relative flex flex-col items-end">
+                            <p
+                              className="user cursor-default"
+                              tabIndex={0}
+                              onContextMenu={(e) =>
+                                handleContextMenu({ e, id: msg.id })
                               }
                             >
-                              Reply
-                            </li>
-                            <li
-                              className="px-4 py-2 hover:bg-accent hover:text-white cursor-pointer"
-                              onClick={() => console.log("Copy text")}
+                              {msg.text}
+                            </p>
+                            <div className="state ">
+                              {msg.status === "seen" ? (
+                                <CheckCheck className="inline-block ml-2 size-4 text-blue-500 " />
+                              ) : msg.status === "delivered" ? (
+                                <CheckCheck className="inline-block ml-2 size-4 text-gray " />
+                              ) : (
+                                <Check className="inline-block ml-2 size-4 text-gray " />
+                              )}
+                            </div>
+                          </div>
+                          <span className="text-sm">{msg.time}</span>
+                          {contextMenu.show && (
+                            <div
+                              className="fixed z-50 bg-background border border-gray rounded-lg w-48 py-2 animate-in fade-in zoom-in duration-100"
+                              style={{
+                                top: contextMenu.y,
+                                left: contextMenu.x,
+                              }}
                             >
-                              Copy Text
-                            </li>
-                            <hr className="my-1 border-gray" />
-                            <li
-                              className="px-4 py-2 hover:bg-destructive hover:text-white cursor-pointer text-red-500"
-                              onClick={() =>
-                                console.log("Delete", contextMenu.targetId)
-                              }
-                            >
-                              Delete Message
-                            </li>
-                          </ul>
+                              <ul className="flex flex-col text-sm text-foreground">
+                                <li
+                                  className="px-4 py-2 hover:bg-accent hover:text-white cursor-pointer flex items-center gap-2"
+                                  onClick={() =>
+                                    console.log(
+                                      "Reply to",
+                                      contextMenu.targetId
+                                    )
+                                  }
+                                >
+                                  Reply
+                                </li>
+                                <li
+                                  className="px-4 py-2 hover:bg-accent hover:text-white cursor-pointer"
+                                  onClick={() => console.log("Copy text")}
+                                >
+                                  Copy Text
+                                </li>
+                                <hr className="my-1 border-gray" />
+                                <li
+                                  className="px-4 py-2 hover:bg-destructive hover:text-white cursor-pointer text-red-500"
+                                  onClick={() =>
+                                    console.log("Delete", contextMenu.targetId)
+                                  }
+                                >
+                                  Delete Message
+                                </li>
+                              </ul>
+                            </div>
+                          )}
                         </div>
-                      )}
-                    </div>
-                  );
-                }
-              })}
-            </div>
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                // Handle message sending logic here
-              }}
-              className="write absolute w-[90%] bottom-5 left-[50%] -translate-x-[50%] mx-auto rounded-2xl bg-background border shadow-lg "
-            >
-              <div className="input flex items-center ">
-                <button type="button" aria-label="Attach file">
-                  <Paperclip className="size-6 m-4 cursor-pointer hover:text-accent duration-200" />
-                </button>
+                      );
+                    }
+                  })}
+                </div>
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    // Handle message sending logic here
+                  }}
+                  className="write absolute w-[90%] bottom-5 left-[50%] -translate-x-[50%] mx-auto rounded-2xl bg-background border shadow-lg "
+                >
+                  <div className="input flex items-center ">
+                    <button type="button" aria-label="Attach file">
+                      <Paperclip className="size-6 m-4 cursor-pointer hover:text-accent duration-200" />
+                    </button>
 
-                <Input
-                  type="text"
-                  placeholder="Write a Message"
-                  className="outline-none border-none px-5 py-8 "
-                />
+                    <Input
+                      type="text"
+                      placeholder="Write a Message"
+                      className="outline-none border-none px-5 py-8 "
+                    />
 
-                <button type="submit" aria-label="Send message">
-                  <Send className="size-6 m-4 cursor-pointer hover:text-accent duration-200" />
-                </button>
+                    <button type="submit" aria-label="Send message">
+                      <Send className="size-6 m-4 cursor-pointer hover:text-accent duration-200" />
+                    </button>
+                  </div>
+                </form>
+              </>
+            ) : (
+              <div className="flex items-center justify-center h-dvh">
+                <p className="text-background text-2xl">
+                  Select a chat to start messaging
+                </p>
               </div>
-            </form>
+            )}
           </div>
         </div>
       </section>
